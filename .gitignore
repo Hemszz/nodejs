@@ -1,0 +1,14 @@
+# Node.js standard .gitignore
+node_modules/
+.env
+npm-debug.log
+dist/
+build/
+.DS_Store
+coverage/
+*.log
+
+# Optional OS and IDE files
+.vscode/
+.idea/
+*.swp
