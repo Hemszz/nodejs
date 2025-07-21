@@ -2,31 +2,42 @@ const express = require('express');
 
 const app = express();
 
+const { adminAuth, userAuth } = require('./middlewares/util');
+
+app.use("/user", userAuth, 
+  (req, res, next) => {
+    console.log("Another middleware for /user route");
+    res.send({ message: "Another middleware for /user route" });
+    next();
+  }
+)
+
+app.use("/admin", adminAuth, (req, res) => {
+  res.send({ message: "Admin route accessed" });
+});
+
 app.get("/hemszz", (req, res) => {
   res.send({ firstName: "Hemszz", lastName: "Node.js" });
 });
 
-app.post("/hemszz", (req, res) => {
-  res.send({ message: "Post request received!" });
+app.get("/user/:userId", (req, res) => {
+  console.log(req.query);
+  console.log(req.params);
+  console.log(req.body);
+  res.send({ id: req.query.userId, name: req.query.name });
 });
 
-app.delete("/hemszz", (req, res) => {
-  res.send({ message: "Delete request received!" });
+app.get("/getUserData", (req, res) => {
+  try{
+    //res.send({ message: "User route accessed" });
+    throw new Error("This is a test error"); 
+  }
+  catch (error) {
+    console.error("Error occurred:", error);
+    res.status(500).send({ error: "An error occurred while processing your request." });
+  }
 });
-
-app.put("/hemszz", (req, res) => {
-  res.send({ message: "Put request received!" });
-});   
-
-app.patch("/hemszz", (req, res) => {
-  res.send({ message: "Patch request received!" });
-});
-
-app.use("/test", (req, res) => {
-  res.send('This is a test route!');
-}); 
-
-
+ 
 app.use("/", (req, res) => {
   res.send('Hello, Hemszz! Welcome to node.js with Express!');
 });
