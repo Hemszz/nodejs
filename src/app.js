@@ -4,18 +4,14 @@ const userModel = require('./models/user');
 
 const app = express();
 
-app.post('/signup', async (req, res) => {
-  const userObj = {
-    name: "Shashikala",
-    email: "Shashikala@gmail.com",
-    password: "123456",
-    age: 25,
-    gender: "M",
-    bio: "Hello, I am Hemanth's Wife ",
-  };
+app.use(express.json()); // Middleware to parse JSON bodies
 
-  //Create a new user instance
-  // and save it to the database
+app.post('/signup', async (req, res) => {
+  
+  const userObj = req.body;
+  // Validate userObj here if needed
+
+  //Create a new user instance and save it to the database
   const user = new userModel(userObj);
   await user.save()
     .then(() => {
@@ -25,7 +21,7 @@ app.post('/signup', async (req, res) => {
       console.error('Error creating user:', error);
     }); 
   // Handle user signup logic here
-  res.send('User signed up successfully');
+  res.send('User signed up successfully'); 
 });
 
 connectDb().then(() => {
