@@ -1,0 +1,22 @@
+{
+  "name": "devtinder-be",
+  "version": "1.0.0",
+  "description": "Tinder Backend",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "nodeJS",
+    "Backend"
+  ],
+  "author": "Hemanth Hemszz",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.17.1",
+    "nodemon": "^3.1.10"
+  }
+}
