@@ -3,10 +3,13 @@ const connectDb = require('./src/config/database');
 const userModel = require('./src/models/user');
 const { validateaSignupData } = require('./src/utils/signup-validation');
 const bcrypt = require('bcrypt');   
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken'); // If you plan to use JWT for authentication
 
 const app = express();
 
 app.use(express.json()); // Middleware to parse JSON bodies
+app.use(cookieParser()); // Middleware to parse cookies
 
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
@@ -19,12 +22,39 @@ app.post('/login', async (req, res) => {
     if (!isPasswordValid) {
       return res.status(401).send('Invalid Credentials');
     }
+    // Generate a JWT token (if using JWT for authentication)
+    const token = jwt.sign({ userId: user._id }, 'JWT12345', { expiresIn: '1h' });
+    res.cookie('token', token, { httpOnly: true }); // Set a cookie with the JWT token
+    // Handle successful login logic here, e.g., redirecting to a dashboard
+    console.log('Login successful for user:', user.email);
+    // You can also send user data or a success message
+
     res.send('Login successful');
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).send('Internal Server Error');
   }
 }); 
+
+app.get('/profile', async (req, res) => {
+  const { token } = req.cookies; // Get the token from cookies
+  const isTokenValid = jwt.verify(token, 'JWT12345'); // Verify the token
+  if (!isTokenValid) {
+    return res.status(401).send('Unauthorized');
+  }
+  const userId = isTokenValid.userId; // Extract user ID from the token
+  try {
+    const user = await userModel.findById(userId);
+    if (!user) {
+      return res.status(404).send('User not found');
+    }
+    res.send(user); // Send the user profile data
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).send('Internal Server Error');
+  }   
+  
+});
 
 app.post('/signup', async (req, res) => {
   
