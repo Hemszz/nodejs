@@ -1,15 +1,51 @@
 const express = require('express');
 const connectDb = require('./src/config/database');
 const userModel = require('./src/models/user');
+const { validateaSignupData } = require('./src/utils/signup-validation');
+const bcrypt = require('bcrypt');   
 
 const app = express();
 
 app.use(express.json()); // Middleware to parse JSON bodies
 
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const user = await userModel.findOne({ email: email });
+    if (!user) {
+      return res.status(404).send('Invalid Credentials');
+    } 
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).send('Invalid Credentials');
+    }
+    res.send('Login successful');
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).send('Internal Server Error');
+  }
+}); 
+
 app.post('/signup', async (req, res) => {
   
   const userObj = req.body;
   // Validate userObj here if needed
+
+  try {
+  validateaSignupData(req); // Validate signup data using the utility function
+
+  // check if the new mail already exists
+  const existingUser = await userModel.findOne({ email: userObj.email });
+  if (existingUser) {
+    return res.status(400).send('Email already exists');
+  }
+
+  //Encrypt password before saving
+  
+  // If you are using bcrypt, you can do something like this:
+  const passwordHash = await bcrypt.hash(userObj.password, 10);
+  userObj.password = passwordHash; // Replace the plain password with the hashed one
+
 
   //Create a new user instance and save it to the database
   const user = new userModel(userObj);
@@ -22,6 +58,11 @@ app.post('/signup', async (req, res) => {
     }); 
   // Handle user signup logic here
   res.send('User signed up successfully'); 
+}
+  catch (error) {
+    console.error('Error during signup:', error);
+    res.status(400).send('Error saving the user: Validation failed. ' + error.message);
+  }
 });
 
 app.get('/user', async (req, res) => {
@@ -74,10 +115,16 @@ app.delete('/user', async (req, res) => {
   }
 });
 
-app.patch('/user', async (req, res) => {
-  const userId = req.body.userId;
+app.patch('/user/:userId', async (req, res) => {
+  const userId = req.params?.userId;
   const updateData = req.body;
+  
   try{
+    const allowedUpdates = ['userId', 'age', 'photoUrl', 'gender', 'bio', 'skills'];
+    const isUpdateAllowed = Object.keys(updateData).every((key) => allowedUpdates.includes(key));
+    if (!isUpdateAllowed) {
+      throw new Error('Invalid update fields');
+    }
     const result = await userModel.findByIdAndUpdate(userId, updateData, { new: true });
     if(result) {
       res.send('User updated successfully');
@@ -88,7 +135,7 @@ app.patch('/user', async (req, res) => {
   }
   catch (error) {
     console.error('Error updating user:', error);
-    res.status(500).send('Internal Server Error');
+    res.status(400).send('Update failed: ' + error.message);
   }
 });
 

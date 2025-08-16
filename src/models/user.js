@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -14,11 +15,9 @@ const userSchema = new mongoose.Schema({
     unique: true,
     trim: true,
     lowercase: true,
-    //write a custom validator to check email format
-    validate(value) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        throw new Error('Invalid email format');
+    validator(value) {
+      if(!validator.isEmail(value)) {
+        throw new Error('Invalid email format '+ value);
       }
     }
   },
@@ -61,18 +60,22 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: 'https://example.com/default-profile.png',
     validate(value) {
-      const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\/?$/;
-      if (!urlRegex.test(value)) {
-        throw new Error('Invalid URL format');
+      if (!validator.isURL(value)) {
+        throw new Error('Invalid URL format for photoUrl');
       }
     }
   },
   skills: {
     type: [String],
     // Custom validation to ensure skills are not empty
+    // Ensure the array doenst have duplicate
     validate(value) {
       if (value.length === 0) {
         throw new Error('Skills array cannot be empty');
+      }
+      const uniqueSkills = new Set(value);
+      if (uniqueSkills.size !== value.length) {
+        throw new Error('Skills must be unique');
       }
     }
   }
